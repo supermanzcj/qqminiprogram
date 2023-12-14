@@ -67,7 +67,6 @@ class QQMiniprogram
 
     /**
      * 获取用户encryptKey
-     * https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-info/internet/getUserEncryptKey.html
      */
     public function getUserEncryptKey($openid, $session_key)
     {
