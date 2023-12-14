@@ -15,7 +15,7 @@ class QQMiniprogramServiceProvider extends ServiceProvider
     {
         // 发布配置文件
         $this->publishes([
-            __DIR__ . '/config/qqminiprogram.php' => config_path('qqminiprogram.php'),
+            __DIR__ . '/config/miniprogram.php' => config_path('miniprogram.php'),
         ]);
     }
 
