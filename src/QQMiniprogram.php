@@ -81,7 +81,11 @@ class QQMiniprogram
 
         $signature = hash_hmac('sha256', '', $session_key);
 
-        $access_token = $this->requestAccessToken();
+        try {
+            $access_token = $this->requestAccessToken();
+        } catch (DefaultException $e) {
+            throw new DefaultException($e->getMessage(), $e->getCode());
+        }
 
         $postData = [];
 
@@ -103,7 +107,11 @@ class QQMiniprogram
     {
         require_once("xxtea.php");
 
-        $result = $this->getUserEncryptKey($openid, $session_key);
+        try {
+            $result = $this->getUserEncryptKey($openid, $session_key);
+        } catch (DefaultException $e) {
+            throw new DefaultException($e->getMessage(), $e->getCode());
+        }
 
         $version = '';
         $encrypt_str = '';
@@ -139,7 +147,11 @@ class QQMiniprogram
     {
         require_once("xxtea.php");
 
-        $result = $this->getUserEncryptKey($openid, $session_key);
+        try {
+            $result = $this->getUserEncryptKey($openid, $session_key);
+        } catch (DefaultException $e) {
+            throw new DefaultException($e->getMessage(), $e->getCode());
+        }
 
         $encrypt_key = '';
         $data = [];
@@ -187,7 +199,11 @@ class QQMiniprogram
             'content' => $content,
         ];
 
-        $access_token = $this->requestAccessToken();
+        try {
+            $access_token = $this->requestAccessToken();
+        } catch (DefaultException $e) {
+            throw new DefaultException($e->getMessage(), $e->getCode());
+        }
 
         $response = Http::post("https://api.q.qq.com/api/json/security/MsgSecCheck?access_token=" . $access_token, $postData);
 
