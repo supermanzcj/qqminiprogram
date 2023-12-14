@@ -11,19 +11,20 @@ class QQMiniprogram
 {
     protected $appid;
     protected $appsecret;
+    protected $access_token;
 
     /**
      * 构造方法
      */
     public function __construct($config)
     {
-        $this->appid = $config->get('miniprogram.wechat.appid');
-        $this->appsecret = $config->get('miniprogram.wechat.appsecret');
+        $this->appid = $config->get('miniprogram.qq.appid');
+        $this->appsecret = $config->get('miniprogram.qq.appsecret');
     }
 
     /**
      * 获取接口调用凭据
-     * https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-access-token/getAccessToken.html
+     * https://q.qq.com/wiki/develop/miniprogram/server/open_port/port_use.html#getaccesstoken
      */
     public function getAccessToken()
     {
@@ -35,32 +36,22 @@ class QQMiniprogram
             throw new DefaultException('缺少配置appsecret', ErrorCodes::INVALID_PARAMS);
         }
 
-        $response = Http::get("https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=" . $this->appid . "&secret=" . $this->appsecret);
+        $response = Http::get("https://api.q.qq.com/api/getToken?grant_type=client_credential&appid=" . $this->appid . "&secret=" . $this->appsecret);
 
         return $this->processResponse($response);
     }
 
     /**
-     * 获取稳定版接口调用凭据
-     * https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/mp-access-token/getStableAccessToken.html
+     * 设置登录调用凭据
      */
-    public function getStableAccessToken($force_refresh = false)
+    public function setAccessToken($access_token)
     {
-        $postData = [
-            'grant_type' => 'client_credential',
-            'appid' => $this->appid,
-            'secret' => $this->appsecret,
-            'force_refresh' => $force_refresh,
-        ];
-
-        $response = Http::post("https://api.weixin.qq.com/cgi-bin/stable_token", $postData);
-
-        return $this->processResponse($response);
+        $this->access_token = $access_token;
     }
 
     /**
-     * 小程序登录
-     * https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-login/code2Session.html
+     * QQ小程序登录
+     * https://q.qq.com/wiki/develop/miniprogram/server/open_port/port_login.html#code2session
      */
     public function code2Session($code)
     {
@@ -69,20 +60,7 @@ class QQMiniprogram
             throw new DefaultException('缺少参数code', ErrorCodes::INVALID_PARAMS);
         }
 
-        $response = Http::get("https://api.weixin.qq.com/sns/jscode2session?appid=" . $this->appid . "&secret=" . $this->appsecret . "&js_code=" . $code . "&grant_type=authorization_code");
-
-        return $this->processResponse($response);
-    }
-
-    /**
-     * 检验登录态
-     * https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-login/checkSessionKey.html
-     */
-    public function checkSessionKey()
-    {
-        $access_token = $this->requestAccessToken();
-
-        $response = Http::get("https://api.weixin.qq.com/wxa/checksession?access_token=" . $access_token);
+        $response = Http::get("https://api.q.qq.com/sns/jscode2session?appid=" . $this->appid . "&secret=" . $this->appsecret . "&js_code=" . $code . "&grant_type=authorization_code");
 
         return $this->processResponse($response);
     }
@@ -103,38 +81,11 @@ class QQMiniprogram
 
         $signature = hash_hmac('sha256', '', $session_key);
 
-        $postData = [
-            'openid' => $openid,
-            'signature' => $signature,
-            'sig_method' => 'hmac_sha256',
-        ];
-
         $access_token = $this->requestAccessToken();
 
-        $response = Http::get("https://api.weixin.qq.com/wxa/business/getuserencryptkey?access_token=" . $access_token . "&openid=" . $openid . "&signature=" . $signature . "&sig_method=hmac_sha256");
+        $postData = [];
 
-        return $this->processResponse($response);
-    }
-
-    /**
-     * 获取手机号
-     * https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/user-info/phone-number/getPhoneNumber.html
-     */
-    public function getPhoneNumber($code, $openid = '')
-    {
-        // 校验参数
-        if ($code == '') {
-            throw new DefaultException('缺少参数code', ErrorCodes::INVALID_PARAMS);
-        }
-
-        $postData = [
-            'code' => $code,
-            'openid' => $openid,
-        ];
-
-        $access_token = $this->requestAccessToken();
-
-        $response = Http::post("https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=" . $access_token, $postData);
+        $response = Http::post("https://api.q.qq.com/api/trpc/userEncryptionSvr/GetUserEncryptKey?access_token=" . $access_token . "&appid=" . $this->appid . "&openid=" . $openid . "&openkey=" . $session_key . "&sig=" . $signature, $postData);
 
         return $this->processResponse($response);
     }
@@ -155,7 +106,6 @@ class QQMiniprogram
         $result = $this->getUserEncryptKey($openid, $session_key);
 
         $version = '';
-        $create_time = '';
         $encrypt_str = '';
 
         if (isset($result['errcode']) && $result['errcode'] === 0) {
@@ -217,55 +167,29 @@ class QQMiniprogram
 
     /**
      * 文本内容安全识别
-     * https://developers.weixin.qq.com/miniprogram/dev/OpenApiDoc/sec-center/sec-check/msgSecCheck.html
-     * result.suggest: 建议，有risky、pass、review三种值
-     * result.label: 命中标签枚举值，100 正常；10001 广告；20001 时政；20002 色情；20003 辱骂；20006 违法犯罪；20008 欺诈；20012 低俗；20013 版权；21000 其他
+     * https://q.qq.com/wiki/develop/miniprogram/server/open_port/port_safe.html#security-msgseccheck
+     * result.errCode: 错误码，0 内容正常；87014 内容含有违法违规内容
+     * result.errMsg: ok 内容正常；risky 内容含有违法违规内容
      *
      * @param content string 需检测的文本内容，文本字数的上限为2500字，需使用UTF-8编码
-     * @param scene string 场景枚举值（1 资料；2 评论；3 论坛；4 社交日志）
-     * @param openid string 用户的openid（用户需在近两小时访问过小程序）
-     * @param encrypt_str string
      *
      * @return array
      */
-    public function msgSecCheck($content, $scene, $openid, $session_key, $title = '', $nickname = '')
+    public function msgSecCheck($content)
     {
         // 校验参数
         if ($content == '') {
             throw new DefaultException('缺少参数content', ErrorCodes::INVALID_PARAMS);
         }
-        if (!in_array($scene, ['1', '2', '3', '4'])) {
-            throw new DefaultException('参数scene不合法', ErrorCodes::INVALID_PARAMS);
-        }
-        if ($openid == '') {
-            throw new DefaultException('缺少参数openid', ErrorCodes::INVALID_PARAMS);
-        }
-        if ($session_key == '') {
-            throw new DefaultException('缺少参数session_key', ErrorCodes::INVALID_PARAMS);
-        }
 
         $postData = [
+            'appid' => $this->appid,
             'content' => $content,
-            'version' => 2,
-            'scene' => $scene,
-            'openid' => $openid,
         ];
-
-        // 非必填参数
-        if ($title) {
-            $postData['title'] = $title;
-        }
-        if ($nickname) {
-            $postData['nickname'] = $nickname;
-        }
-        if ($scene == 1) {
-            $signature = hash_hmac('sha256', '', $session_key);
-            $postData['signature'] = $signature;
-        }
 
         $access_token = $this->requestAccessToken();
 
-        $response = Http::post("https://api.weixin.qq.com/wxa/msg_sec_check?access_token=" . $access_token, $postData);
+        $response = Http::post("https://api.q.qq.com/api/json/security/MsgSecCheck?access_token=" . $access_token, $postData);
 
         return $this->processResponse($response);
     }
@@ -275,17 +199,12 @@ class QQMiniprogram
      */
     private function requestAccessToken()
     {
-        $access_token = "";
-
-        // 获取接口调用凭据
-        $accessTokenRet = $this->getStableAccessToken();
-        Log::info("requestAccessToken: ", [$accessTokenRet]);
-        if ($accessTokenRet !== false) {
-            $access_token = $accessTokenRet['access_token'];
+        // 校验是否设置登录调用凭据
+        if ($this->access_token == '') {
+            throw new DefaultException('未设置登录调用凭据', ErrorCodes::INVALID_PARAMS);
         }
-        Log::info("access_token: ", [$access_token]);
 
-        return $access_token;
+        return $this->access_token;
     }
 
     /**
