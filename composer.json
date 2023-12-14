@@ -1,0 +1,24 @@
+{
+    "name": "superzc/qqminiprogram",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "Superzc\\Miniprogram\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "superzc"
+        }
+    ],
+    "minimum-stability": "dev",
+    "require": {},
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Superzc\\QQMiniprogram\\QQMiniprogramServiceProvider"
+            ]
+        }
+    }
+}
