@@ -23,6 +23,11 @@ use Superzc\QQMiniprogram\Exceptions\DefaultException as QQMPDefaultException;
 
 try {
     $qqminiprogram = new QQMiniprogram();
+
+    // 如果需要登录调用凭据，先获取access_token（有效期2小时，建议缓存，避免重复刷新），再设置access_token
+    $access_token = $qqminiprogram->getAccessToken(); 
+    $qqminiprogram->setAccessToken($access_token);
+
     $result = $qqminiprogram->doSomething();
 } catch (QQMPDefaultException $e) {
     return response()->json([
@@ -37,6 +42,10 @@ try {
 use Superzc\QQMiniprogram\Facades\QQMiniprogram;
 
 try {
+    // 如果需要登录调用凭据，先获取access_token（有效期2小时，建议缓存，避免重复刷新），再设置access_token
+    $access_token = QQMiniprogram::getAccessToken(); 
+    QQMiniprogram::setAccessToken($access_token);
+
     $result = QQMiniprogram::doSomething();
 } catch (QQMPDefaultException $e) {
     return response()->json([
