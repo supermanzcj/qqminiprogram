@@ -16,6 +16,16 @@ composer require superzc/qqminiprogram
 
 ## Usage
 
+修改小程序配置文件`config/miniprogram.php`
+```php
+return [
+    'qq' => [
+        'appid' => 'xxx',
+        'appsecret' => 'xxx',
+    ],
+];
+```
+
 调用类方法
 ```php
 use Superzc\QQMiniprogram\QQMiniprogram;
