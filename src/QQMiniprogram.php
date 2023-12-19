@@ -78,7 +78,7 @@ class QQMiniprogram
             throw new DefaultException('缺少参数session_key', ErrorCodes::INVALID_PARAMS);
         }
 
-        $signature = hash_hmac('sha256', '', $session_key);
+        $signature = hash_hmac('sha256', '{}', $session_key);
 
         try {
             $access_token = $this->requestAccessToken();
@@ -86,7 +86,7 @@ class QQMiniprogram
             throw new DefaultException($e->getMessage(), $e->getCode());
         }
 
-        $postData = [];
+        $postData = '';
 
         $response = Http::post("https://api.q.qq.com/api/trpc/userEncryptionSvr/GetUserEncryptKey?access_token=" . $access_token . "&appid=" . $this->appid . "&openid=" . $openid . "&openkey=" . $session_key . "&sig=" . $signature, $postData);
 
