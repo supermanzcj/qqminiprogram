@@ -89,6 +89,7 @@ class QQMiniprogram
         $postData = '';
 
         $response = Http::post("https://api.q.qq.com/api/trpc/userEncryptionSvr/GetUserEncryptKey?access_token=" . $access_token . "&appid=" . $this->appid . "&openid=" . $openid . "&openkey=" . $session_key . "&sig=" . $signature, $postData);
+        Log::info("getUserEncryptKey response: ", [$response]);
 
         return $this->processResponse($response);
     }
